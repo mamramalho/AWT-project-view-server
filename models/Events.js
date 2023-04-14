@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     date: {
       type: DataTypes.DATE,
+      allowNull: false,
     },
     title: {
       type: DataTypes.STRING(45),
@@ -14,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     active: {
       type: DataTypes.TINYINT(1),
+      defaultValue: "1",
     },
     description: {
       type: DataTypes.STRING(150),
