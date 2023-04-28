@@ -43,5 +43,16 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Users.createUser = async function (userData) {
+    const salt = await bcrypt.genSalt(10);
+    const password = await bcrypt.hash(userData.password, salt);
+
+    return this.create({
+      name: userData.name,
+      email: userData.email,
+      password: password,
+    });
+  };
+
   return Users;
 };
