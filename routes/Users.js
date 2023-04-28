@@ -2,22 +2,24 @@ const express = require("express");
 const router = express.Router();
 const { Users } = require("../models");
 
+router.get("/", async (req, res) => {
+  const listOfUsers = await Users.findAll();
+  res.json(listOfUsers);
+});
+
 router.post("/", async (req, res) => {
-  const { name, email, password, repeatPassword } = req.body;
-
-  if (password !== repeatPassword) {
-    return res.status(400).json({ error: "Passwords do not match" });
+  try {
+    const { name, email, password } = req.body;
+    const newUser = await Users.create({
+      name,
+      email,
+      password,
+    });
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Error creating user" });
   }
-
-  const existingUser = await Users.findOne({ where: { email } });
-  if (existingUser) {
-    return res
-      .status(400)
-      .json({ error: "User with this email already exists" });
-  }
-
-  const newUser = await Users.create({ name, email, password });
-  res.json(newUser);
 });
 
 module.exports = router;
