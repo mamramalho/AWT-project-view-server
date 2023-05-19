@@ -20,8 +20,20 @@ app.use(passport.session());
 const authMiddleware = require("./middlewares/authMiddleware");
 const db = require("./models");
 
+const Users = db.Users;
+const Calendar = db.Calendar;
+
+Users.hasOne(Calendar, {
+  foreignKey: "users_id",
+  onDelete: "CASCADE",
+});
+Calendar.belongsTo(Users, {
+  foreignKey: "users_id",
+});
+
 const userRouter = require("./routes/Users");
 app.use("/user", userRouter);
+
 const calendarRouter = require("./routes/Calendar");
 app.use("/calendar", calendarRouter);
 const eventRouter = require("./routes/Events");

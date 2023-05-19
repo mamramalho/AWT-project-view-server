@@ -1,42 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const { Users } = require("../models");
+const { Users, Calendar } = require("../models");
 const bcrypt = require("bcrypt");
+const passport = require("passport");
 
-router.get("/", async (req, res) => {
-  const listOfUsers = await Users.findAll();
-  res.json(listOfUsers);
-});
-
-router.post("/", async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (name) {
-      const newUser = await Users.create({
-        name,
-        email,
-        password,
-      });
+    if (name && email && password) {
+      const newUser = await Users.createUser({ name, email, password });
+      await Calendar.create({ name: "My Calendar", UserId: newUser.id });
+
       return res.status(201).json(newUser);
     }
 
-    const user = await Users.findOne({ where: { email } });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    res.status(200).json({ message: "Login successful" });
+    res.status(400).json({ message: "Invalid user registration data" });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: "Error during login or user creation" });
+    console.error("Error during user registration:", error);
+    res.status(500).json({ message: "Error during user registration" });
+  }
+});
+
+router.post("/login", passport.authenticate("local"), async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    res.redirect(`/calendar/${userId}`);
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Error during login" });
   }
 });
 

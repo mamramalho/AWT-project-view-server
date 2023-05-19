@@ -1,11 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { Events } = require("../models");
+const { route } = require("./Users");
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming the user object with ID is available in req.user
-    const listOfEvents = await Events.findAll({ where: { userId } });
+    const calendarID = req.calendar.id;
+    const listOfEvents = await Events.findAll({
+      where: { calendar_id: calendarID },
+    });
     res.json(listOfEvents);
   } catch (error) {
     console.error("Error retrieving events:", error);
@@ -33,16 +36,16 @@ router.post("/", async (req, res) => {
   const formattedDate = new Date(date).toISOString().split("T")[0];
 
   try {
-    const userId = req.user.id; // Assuming the user ID is provided in the request body
+    const calendarID = req.calendar.id;
     const newEvent = await Events.create({
       title,
       description,
       date: formattedDate,
-      userId,
+      calendar_id: calendarID,
     });
     res.status(201).json(newEvent);
   } catch (error) {
-    console.log(error);
+    console.error("Error creating event:", error);
     res.status(400).json({ message: "Error creating event" });
   }
 });

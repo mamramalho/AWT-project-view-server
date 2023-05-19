@@ -4,14 +4,10 @@ module.exports = (sequelize) => {
   const Calendar = sequelize.define(
     "Calendar",
     {
-      calendar_id: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-      },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
       },
     },
     { timestamps: false }
@@ -19,7 +15,7 @@ module.exports = (sequelize) => {
 
   Calendar.associate = (models) => {
     Calendar.belongsTo(models.Users, {
-      foreignKey: "users_id",
+      foreignKey: "userId",
     });
   };
 
