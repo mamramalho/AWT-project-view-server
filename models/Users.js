@@ -1,4 +1,6 @@
 const bcrypt = require("bcrypt");
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
 
 module.exports = (sequelize, DataTypes) => {
   const Users = sequelize.define(
@@ -53,6 +55,41 @@ module.exports = (sequelize, DataTypes) => {
       password: password,
     });
   };
+
+  Users.authenticate = async function (email, password, done) {
+    try {
+      const user = await this.findOne({ where: { email } });
+      if (!user) {
+        return done(null, false, { message: "Incorrect email or password" });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return done(null, false, { message: "Incorrect email or password" });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
+  };
+
+  passport.use(
+    new LocalStrategy({ usernameField: "email" }, Users.authenticate)
+  );
+
+  passport.serializeUser((user, done) => {
+    done(null, user.users_id);
+  });
+
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await Users.findByPk(id);
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
+  });
 
   return Users;
 };

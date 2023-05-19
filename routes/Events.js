@@ -3,14 +3,14 @@ const router = express.Router();
 const { Events } = require("../models");
 
 router.get("/", async (req, res) => {
-  const listOfEvents = await Events.findAll();
-  res.json(listOfEvents);
-});
-
-router.post("/", async (req, res) => {
-  const event = req.body;
-  await Events.create(event);
-  res.json(event);
+  try {
+    const userId = req.user.id; // Assuming the user object with ID is available in req.user
+    const listOfEvents = await Events.findAll({ where: { userId } });
+    res.json(listOfEvents);
+  } catch (error) {
+    console.error("Error retrieving events:", error);
+    res.status(500).json({ message: "Failed to retrieve events" });
+  }
 });
 
 router.delete("/:eventId", async (req, res) => {
@@ -28,17 +28,47 @@ router.delete("/:eventId", async (req, res) => {
   }
 });
 
-/* router.get("/", async (req, res) => {
-  const userId = req.user.id; // Assuming you have a user object with an ID property
-  const listOfEvents = await Events.findAll({ where: { userId } });
-  res.json(listOfEvents);
+router.post("/", async (req, res) => {
+  const { title, description, date } = req.body;
+  const formattedDate = new Date(date).toISOString().split("T")[0];
+
+  try {
+    const userId = req.user.id; // Assuming the user ID is provided in the request body
+    const newEvent = await Events.create({
+      title,
+      description,
+      date: formattedDate,
+      userId,
+    });
+    res.status(201).json(newEvent);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: "Error creating event" });
+  }
 });
 
-router.post("/", async (req, res) => {
-  const userId = req.user.id; // Assuming you have a user object with an ID property
-  const event = { ...req.body, userId };
-  await Events.create(event);
-  res.json(event);
-}); */
+router.put("/:eventId", async (req, res) => {
+  const { eventId } = req.params;
+  const { title, description, date } = req.body;
+  const formattedDate = new Date(date).toISOString().split("T")[0];
+
+  try {
+    const event = await Events.findByPk(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    await event.update({
+      title,
+      description,
+      date: formattedDate,
+    });
+
+    res.json(event);
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({ message: "Failed to update event" });
+  }
+});
 
 module.exports = router;
