@@ -3,8 +3,6 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const session = require("express-session");
-const passport = require("./passport");
-const LocalStrategy = require("passport-local").Strategy;
 const { Sequelize } = require("sequelize");
 const authMiddleware = require("./authMiddleware");
 const logger = require("./logger");
@@ -34,27 +32,6 @@ app.use(
     saveUninitialized: true,
   })
 );
-
-passport.debug = true;
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(
-  new LocalStrategy({ usernameField: "email" }, Users.authenticate())
-);
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await Users.findByPk(id);
-    done(null, user);
-  } catch (error) {
-    done(error);
-  }
-});
 
 const userRouter = require("./routes/Users");
 app.use("/user", userRouter);

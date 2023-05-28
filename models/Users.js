@@ -52,6 +52,7 @@ module.exports = (sequelize, DataTypes) => {
 
       return user;
     } catch (error) {
+      logger.error(error.message);
       throw error;
     }
   };
@@ -64,11 +65,7 @@ module.exports = (sequelize, DataTypes) => {
         return { error: "Incorrect email" };
       }
 
-      const isPasswordValid = await bcrypt.compare(
-        req.body.password,
-        user.password
-      );
-      logger.info({ email, password, user, isPasswordValid: isPasswordValid });
+      const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
         return { error: "Incorrect password" };
@@ -76,7 +73,8 @@ module.exports = (sequelize, DataTypes) => {
 
       return { user };
     } catch (error) {
-      return { error };
+      logger.error(error.message);
+      return { error: error };
     }
   };
 
