@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
+const logger = require("../logger");
 
 module.exports = (sequelize, DataTypes) => {
   const Users = sequelize.define(
@@ -27,14 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: false,
       underscored: true,
-      hooks: {
-        beforeSave: async (user) => {
-          if (user.password) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(user.password, salt);
-          }
-        },
-      },
     }
   );
 
@@ -65,65 +56,29 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
-  Users.authenticate = async function (email, password, done) {
+  Users.authenticate = async function (email, password) {
     try {
-      const user = await this.findOne({ where: { email } });
+      const user = await Users.findOne({ where: { email } });
+
       if (!user) {
-        return done(null, false, { message: "Incorrect email or password" });
+        return { error: "Incorrect email" };
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(
+        req.body.password,
+        user.password
+      );
+      logger.info({ email, password, user, isPasswordValid: isPasswordValid });
+
       if (!isPasswordValid) {
-        return done(null, false, { message: "Incorrect email or password" });
+        return { error: "Incorrect password" };
       }
 
-      return done(null, user);
+      return { user };
     } catch (error) {
-      return done(error);
+      return { error };
     }
   };
-
-  passport.use(
-    new LocalStrategy(
-      { usernameField: "email" },
-      async (email, password, done) => {
-        try {
-          const user = await Users.findOne({ where: { email } });
-
-          if (!user) {
-            return done(null, false, {
-              message: "Incorrect email or password",
-            });
-          }
-
-          const isPasswordValid = await bcrypt.compare(password, user.password);
-
-          if (!isPasswordValid) {
-            return done(null, false, {
-              message: "Incorrect email or password",
-            });
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
-
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
-  });
-
-  passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await Users.findByPk(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
-  });
 
   return Users;
 };

@@ -2,34 +2,97 @@ const express = require("express");
 const router = express.Router();
 const { Users, Calendar } = require("../models");
 const bcrypt = require("bcrypt");
-const passport = require("passport");
+const jwt = require("jsonwebtoken");
+const passport = require("../passport");
+const LocalStrategy = require("passport-local").Strategy;
+require("dotenv").config({ path: "../.env" });
+const logger = require("../logger");
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+    },
+    async (email, password, done) => {
+      try {
+        const user = await Users.findOne({ where: { email } });
+        if (!user) {
+          return done(null, false, { message: "Incorrect email" });
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          req.body.password,
+          user.password
+        );
+        if (!isPasswordValid) {
+          return done(null, false, { message: "Incorrect password" });
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await Users.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error);
+  }
+});
 
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     if (name && email && password) {
-      const newUser = await Users.createUser({ name, email, password });
-      await Calendar.create({ name: "My Calendar", UserId: newUser.id });
+      const existingUser = await Users.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await Users.createUser({
+        name,
+        email,
+        password: hashedPassword,
+      });
 
-      return res.status(201).json(newUser);
+      const secretKey = process.env.JWT_SECRET;
+      const token = jwt.sign({ userId: newUser.id }, secretKey, {
+        expiresIn: "1h",
+      });
+
+      return res.status(201).json({ user: newUser, token });
     }
 
-    res.status(400).json({ message: "Invalid user registration data" });
+    return res.status(400).json({ message: "Invalid user registration data" });
   } catch (error) {
-    console.error("Error during user registration:", error);
-    res.status(500).json({ message: "Error during user registration" });
+    logger.error(error);
+    return res.status(500).json({ message: "Error during user registration" });
   }
 });
 
-router.post("/login", passport.authenticate("local"), async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { email, password } = req.body;
+    const user = await Users.authenticate(email, password);
+    //logger.info(user);
 
-    res.redirect(`/calendar/${userId}`);
+    const secretKey = process.env.JWT_SECRET;
+    const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: "1h" });
+
+    return res.status(200).json({ user, token });
   } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({ message: "Error during login" });
+    //logger.error(error);
+    return res.status(500).json({ message: "Error during login" });
   }
 });
 

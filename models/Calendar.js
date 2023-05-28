@@ -1,4 +1,5 @@
 const { DataTypes } = require("sequelize");
+const { Users } = require("./Users");
 
 module.exports = (sequelize) => {
   const Calendar = sequelize.define(

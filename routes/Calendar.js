@@ -1,28 +1,38 @@
 const express = require("express");
 const router = express.Router();
 const { Calendar } = require("../models");
+const authMiddleware = require("../authMiddleware");
 
-router.get("/", async (req, res) => {
-  const user_id = req.user.id;
+router.use(authMiddleware);
+
+router.get("/:id", async (req, res) => {
+  const userId = req.user.id;
+  const calendar_id = req.params.id;
+
   try {
-    const listOfCalendar = await Calendar.findAll({
-      where: { user_id: user_id },
+    const calendar = await Calendar.findOne({
+      where: { id: calendar_id, userId: userId },
     });
-    res.json(listOfCalendar);
+
+    if (!calendar) {
+      return res.status(404).json({ message: "Calendar not found" });
+    }
+
+    res.json(calendar);
   } catch (error) {
-    console.error("Error retrieving calendars:", error);
-    res.status(500).json({ message: "Error retrieving calendars" });
+    console.error("Error retrieving calendar:", error);
+    res.status(500).json({ message: "Error retrieving calendar" });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
     const { name } = req.body;
-    const user_id = req.user.id;
+    const userId = req.user.id;
 
     const calendar = await Calendar.create({
       name,
-      user_id,
+      userId,
     });
 
     res.status(201).json(calendar);
