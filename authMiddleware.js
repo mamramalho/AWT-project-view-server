@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const logger = require("./logger");
 
 const authenticateUser = (req, res, next) => {
   if (req.path === "/user/register" || req.path === "/user/login") {
@@ -6,6 +7,7 @@ const authenticateUser = (req, res, next) => {
   }
 
   const token = req.headers.authorization;
+  logger.warn(token);
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized (NO TOKEN)" });
@@ -16,6 +18,8 @@ const authenticateUser = (req, res, next) => {
     const { userId } = decodedToken;
 
     req.user = { id: userId };
+
+    logger.warn(userId);
 
     next();
   } catch (error) {

@@ -18,8 +18,7 @@ router.post("/register", async (req, res) => {
 
       const newUser = await Users.createUser({ name, email, password });
 
-      const secretKey = process.env.JWT_SECRET;
-      const token = jwt.sign({ userId: newUser.id }, secretKey, {
+      const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
 

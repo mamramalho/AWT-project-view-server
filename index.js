@@ -33,6 +33,8 @@ app.use(
   })
 );
 
+app.use(authMiddleware);
+
 const userRouter = require("./routes/Users");
 app.use("/user", userRouter);
 
@@ -44,8 +46,6 @@ app.use("/event", eventRouter);
 
 const inviteRouter = require("./routes/Invites");
 app.use("/invite", inviteRouter);
-
-app.use(authMiddleware);
 
 sequelize.sync().then(() => {
   app.listen(3001, () => {

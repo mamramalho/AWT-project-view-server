@@ -1,14 +1,52 @@
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 const { Events } = require("../models");
-const { route } = require("./Users");
+const logger = require("../logger");
+const authMiddleware = require("../authMiddleware");
+
+router.use(authMiddleware);
+
+router.post("/create", async (req, res) => {
+  try {
+    const { title, description, date } = req.body;
+    const formattedDate = new Date(date).toISOString().split("T")[0];
+
+    if (title && description && date) {
+      const existingEvent = await Events.findOne({
+        where: { title, description, date: formattedDate },
+      });
+
+      if (existingEvent) {
+        return res.status(400).json({ message: "Event already exists" });
+      }
+
+      const newEvent = await Events.create({
+        title,
+        description,
+        date: formattedDate,
+      });
+
+      return res.status(201).json(newEvent);
+    }
+
+    return res.status(400).json({ message: "Invalid event creation data" });
+  } catch (error) {
+    return res.status(400).json({ message: "Error during event creation" });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
     const calendarID = req.calendar.id;
-    const listOfEvents = await Events.findAll({
-      where: { calendar_id: calendarID },
-    });
+    const token = req.headers.authorization;
+
+    const response = await axios.get(
+      `http://localhost:3001/events?calendar_id=${calendarID}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const listOfEvents = response.data;
     res.json(listOfEvents);
   } catch (error) {
     console.error("Error retrieving events:", error);
@@ -28,25 +66,6 @@ router.delete("/:eventId", async (req, res) => {
   } catch (error) {
     console.error("Error deleting event:", error);
     res.status(500).json({ message: "Failed to delete event" });
-  }
-});
-
-router.post("/", async (req, res) => {
-  const { title, description, date } = req.body;
-  const formattedDate = new Date(date).toISOString().split("T")[0];
-
-  try {
-    const calendarID = req.calendar.id;
-    const newEvent = await Events.create({
-      title,
-      description,
-      date: formattedDate,
-      calendar_id: calendarID,
-    });
-    res.status(201).json(newEvent);
-  } catch (error) {
-    console.error("Error creating event:", error);
-    res.status(400).json({ message: "Error creating event" });
   }
 });
 
