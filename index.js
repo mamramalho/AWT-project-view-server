@@ -33,7 +33,7 @@ app.use("/event", eventRouter);
 const inviteRouter = require("./routes/invite.router");
 app.use("/invite", inviteRouter);
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({ force: "true" }).then(() => {
   app.listen(3001, () => {
     logger.info("Server is running on port 3001");
   });

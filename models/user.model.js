@@ -8,11 +8,6 @@ module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
     "user",
     {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
       name: {
         type: DataTypes.STRING(100),
         allowNull: false,
@@ -37,9 +32,16 @@ module.exports = (sequelize, DataTypes) => {
     const password = await bcrypt.hash(userData.password, salt);
 
     try {
-      const newUser = await User.create(userData);
+      const newUser = await User.create({
+        name: userData.name,
+        email: userData.email,
+        password: password,
+      });
 
-      return newUser;
+      const Calendar = sequelize.models.calendar;
+      const newCalendar = await Calendar.create({ userId: newUser.id });
+
+      return { user: newUser, calendar: newCalendar };
     } catch (error) {
       logger.error(error.message);
       throw error;

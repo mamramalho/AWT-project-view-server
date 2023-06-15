@@ -3,11 +3,6 @@ const sequelize = require("./index");
 
 module.exports = (sequelize, DataTypes) => {
   const Event = sequelize.define("event", {
-    events_id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
     date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
@@ -33,5 +28,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
     },
   });
+
   return Event;
 };
