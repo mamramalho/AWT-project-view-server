@@ -1,9 +1,12 @@
-const bcrypt = require("bcrypt");
+const { DataTypes } = require("sequelize");
+const sequelize = require("./index");
 const logger = require("../logger");
+const bcrypt = require("bcrypt");
+const { authenticate } = require("passport");
 
 module.exports = (sequelize, DataTypes) => {
-  const Users = sequelize.define(
-    "Users",
+  const User = sequelize.define(
+    "user",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -29,37 +32,24 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Users.associate = (models) => {
-    Users.hasOne(models.Calendar, {
-      foreignKey: "userId",
-      onDelete: "CASCADE",
-    });
-  };
-
-  Users.createUser = async function (userData) {
+  const createUser = async function (userData) {
     const salt = await bcrypt.genSalt(10);
     const password = await bcrypt.hash(userData.password, salt);
 
     try {
-      const user = await Users.create({
-        name: userData.name,
-        email: userData.email,
-        password: password,
-      });
+      const newUser = await User.create(userData);
 
-      const Calendar = sequelize.models.Calendar;
-      await Calendar.create({ userId: user.id });
-
-      return user;
+      return newUser;
     } catch (error) {
       logger.error(error.message);
       throw error;
     }
   };
+  User.createUser = createUser;
 
-  Users.authenticate = async function (email, password) {
+  const authenticate = async function (email, password) {
     try {
-      const user = await Users.findOne({ where: { email } });
+      const user = await User.findOne({ where: { email } });
 
       if (!user) {
         return { error: "Incorrect email" };
@@ -77,6 +67,7 @@ module.exports = (sequelize, DataTypes) => {
       return { error: error };
     }
   };
+  User.authenticate = authenticate;
 
-  return Users;
+  return User;
 };

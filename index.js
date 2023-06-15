@@ -3,27 +3,13 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const session = require("express-session");
-const { Sequelize } = require("sequelize");
 const authMiddleware = require("./authMiddleware");
 const logger = require("./logger");
-
-const sequelize = new Sequelize("AWTDB", "root", "password", {
-  host: "127.0.0.1",
-  dialect: "mysql",
-});
-
-const Users = require("./models/Users")(sequelize, Sequelize);
-const Calendar = require("./models/Calendar")(sequelize, Sequelize);
-const Events = require("./models/Events")(sequelize, Sequelize);
-
-Users.associate({ Calendar });
-Calendar.associate({ Users });
-Events.associate({ Calendar });
+const db = require("./models");
 
 app.use(cors());
-
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
@@ -35,19 +21,19 @@ app.use(
 
 app.use(authMiddleware);
 
-const userRouter = require("./routes/Users");
+const userRouter = require("./routes/user.router");
 app.use("/user", userRouter);
 
-const calendarRouter = require("./routes/Calendar");
+const calendarRouter = require("./routes/calendar.router");
 app.use("/calendar", calendarRouter);
 
-const eventRouter = require("./routes/Events");
+const eventRouter = require("./routes/event.router");
 app.use("/event", eventRouter);
 
-const inviteRouter = require("./routes/Invites");
+const inviteRouter = require("./routes/invite.router");
 app.use("/invite", inviteRouter);
 
-sequelize.sync().then(() => {
+db.sequelize.sync().then(() => {
   app.listen(3001, () => {
     logger.info("Server is running on port 3001");
   });

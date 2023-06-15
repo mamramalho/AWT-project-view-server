@@ -1,5 +1,8 @@
+const { DataTypes } = require("sequelize");
+const sequelize = require("./index");
+
 module.exports = (sequelize, DataTypes) => {
-  const Events = sequelize.define("Events", {
+  const Event = sequelize.define("event", {
     events_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -30,12 +33,5 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
     },
   });
-
-  Events.associate = (models) => {
-    Events.belongsTo(models.Calendar, {
-      foreignKey: "calendar_id",
-    });
-  };
-
-  return Events;
+  return Event;
 };

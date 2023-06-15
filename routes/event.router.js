@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const { Events } = require("../models");
-const logger = require("../logger");
+const dd = require("dump-die");
+const models = require("../models/index");
 const authMiddleware = require("../authMiddleware");
 
 router.use(authMiddleware);
@@ -13,7 +13,7 @@ router.post("/create", async (req, res) => {
     const formattedDate = new Date(date).toISOString().split("T")[0];
 
     if (title && description && date) {
-      const existingEvent = await Events.findOne({
+      const existingEvent = await models.event.findOne({
         where: { title, description, date: formattedDate },
       });
 
@@ -21,7 +21,7 @@ router.post("/create", async (req, res) => {
         return res.status(400).json({ message: "Event already exists" });
       }
 
-      const newEvent = await Events.create({
+      const newEvent = await create({
         title,
         description,
         date: formattedDate,
@@ -57,7 +57,7 @@ router.get("/", async (req, res) => {
 router.delete("/:eventId", async (req, res) => {
   const eventId = req.params.eventId;
   try {
-    const event = await Events.findByPk(eventId);
+    const event = await models.event.findByPk(eventId);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
@@ -75,7 +75,7 @@ router.put("/:eventId", async (req, res) => {
   const formattedDate = new Date(date).toISOString().split("T")[0];
 
   try {
-    const event = await Events.findByPk(eventId);
+    const event = await models.event.findByPk(eventId);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }

@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { Calendar } = require("../models");
+const models = require("../models/index");
 const authMiddleware = require("../authMiddleware");
+const dd = require("dump-die");
 
 router.use(authMiddleware);
 
@@ -10,7 +11,7 @@ router.get("/:id", async (req, res) => {
   const calendar_id = req.params.id;
 
   try {
-    const calendar = await Calendar.findOne({
+    const calendar = await models.calendar.findOne({
       where: { id: calendar_id, userId: userId },
     });
 
@@ -30,7 +31,7 @@ router.post("/", async (req, res) => {
     const { name } = req.body;
     const userId = req.user.id;
 
-    const calendar = await Calendar.create({
+    const calendar = await create({
       name,
       userId,
     });
