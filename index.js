@@ -1,40 +1,20 @@
 require("dotenv").config();
+const invites = require("./routes/invites");
+const events = require("./routes/events");
+const users = require("./routes/users");
+const auth = require("./routes/auth");
+const connection = require("./db");
 const express = require("express");
 const app = express();
-const cors = require("cors");
-const session = require("express-session");
-const authMiddleware = require("./authMiddleware");
-const logger = require("./logger");
-const db = require("./models");
 
-app.use(cors());
+connection();
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+app.use("/user", users);
+app.use("/auth", auth);
+app.use("/event", events);
+app.use("/invite", invites);
 
-app.use(authMiddleware);
-
-const userRouter = require("./routes/user.router");
-app.use("/user", userRouter);
-
-const calendarRouter = require("./routes/calendar.router");
-app.use("/calendar", calendarRouter);
-
-const eventRouter = require("./routes/event.router");
-app.use("/event", eventRouter);
-
-const inviteRouter = require("./routes/invite.router");
-app.use("/invite", inviteRouter);
-
-db.sequelize.sync({ force: "true" }).then(() => {
-  app.listen(3001, () => {
-    logger.info("Server is running on port 3001");
-  });
-});
+const port = process.env.PORT || 8080;
+app.listen(port, () => console.log("Listening on port 8080..."));
