@@ -10,7 +10,7 @@ router.post("/create", auth, async (req, res) => {
     const event = new Event(req.body);
     event.userEvent = req.user._id;
 
-    const calendar = await Calendar.findOne({ userCalendar: req.user._id });
+    const calendar = await Calendar.find({ userCalendar: req.user._id });
     if (!calendar) {
       return res.status(400).send("Calendar not found");
     }
@@ -25,7 +25,7 @@ router.post("/create", auth, async (req, res) => {
   }
 });
 
-router.put("/:eventId", auth, async (req, res) => {
+router.put("/:eventId/alter", auth, async (req, res) => {
   try {
     const eventId = req.params.eventId;
     const { title, description, date } = req.body;
@@ -45,7 +45,7 @@ router.put("/:eventId", auth, async (req, res) => {
   }
 });
 
-router.delete("/:eventId", auth, async (req, res) => {
+router.delete("/:eventId/delete", auth, async (req, res) => {
   try {
     const eventId = req.params.eventId;
 
@@ -54,11 +54,11 @@ router.delete("/:eventId", auth, async (req, res) => {
       return res.status(404).send("Event not found");
     }
 
-    await event.remove();
+    await Event.findByIdAndRemove(eventId);
 
-    res.send("Event deleted");
+    res.send("Event deleted successfully");
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send("An error occurred while deleting the event");
   }
 });
