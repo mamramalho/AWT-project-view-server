@@ -15,6 +15,18 @@ const eventSchema = new Schema({
     type: Date,
     required: true,
   },
+  address: {
+    type: String,
+    required: false,
+  },
+  latitude: {
+    type: Number,
+    required: false,
+  },
+  longitude: {
+    type: Number,
+    required: false,
+  },
   updated: {
     type: Date,
     default: Date.now,

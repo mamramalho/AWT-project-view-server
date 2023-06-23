@@ -44,7 +44,7 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
-router.post("/logout", async (req, res) => {
+router.post("/logout", auth, async (req, res) => {
   try {
     // Implement your logout logic here
     // For example, you can clear the user's session and remove the token

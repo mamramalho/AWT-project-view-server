@@ -10,12 +10,29 @@ const inviteSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "event",
   },
+  senderName: {
+    type: String,
+  },
   recipientId: {
     type: String,
   },
   recipientEmail: {
     type: String,
     required: true,
+  },
+  eventInfo: {
+    title: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    date: {
+      type: Date,
+      required: true,
+    },
   },
   status: {
     type: String,

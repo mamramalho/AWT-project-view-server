@@ -1,10 +1,9 @@
-const { Invite } = require("../models.js/invite");
 const { User } = require("../models.js/user");
 const { Calendar } = require("../models.js/calendar");
 const { Event } = require("../models.js/event");
+const { Invite } = require("../models.js/invite");
 const auth = require("../middleware/auth");
 const express = require("express");
-const { Logger } = require("winston");
 const router = express.Router();
 
 router.get("/incoming", auth, async (req, res) => {
@@ -31,18 +30,17 @@ router.post("/:inviteId/accept", auth, async (req, res) => {
     invite.status = "accepted";
     await invite.save();
 
-    const event = await Event.findById(invite.eventId);
-    if (!event) {
-      return res.status(404).send("Event not found");
-    }
+    const event = invite.eventInfo;
 
     const recipientEvent = new Event({
-      ...event.toObject(),
-      _id: undefined,
+      title: event.title,
+      description: event.description,
+      date: event.date,
       userEvent: req.user._id,
     });
 
     await recipientEvent.save();
+    await Invite.findByIdAndRemove(inviteId);
 
     res.send(recipientEvent);
   } catch (error) {
@@ -51,7 +49,7 @@ router.post("/:inviteId/accept", auth, async (req, res) => {
   }
 });
 
-router.post("/:inviteId/decline", auth, async (req, res) => {
+router.delete("/:inviteId/decline", auth, async (req, res) => {
   try {
     const inviteId = req.params.inviteId;
 
@@ -60,15 +58,12 @@ router.post("/:inviteId/decline", auth, async (req, res) => {
       return res.status(404).send("Invite not found");
     }
 
-    invite.status = "declined";
-    await invite.save();
+    await Invite.findByIdAndRemove(inviteId);
 
-    await Invite.findByIdAndDelete(inviteId);
-
-    res.send("Invite declined and deleted");
+    res.send("Invite deleted successfully");
   } catch (error) {
-    console.log(error);
-    res.status(500).send("An error occurred while declining the invite");
+    console.error(error);
+    res.status(500).send("An error occurred while deleting the invite");
   }
 });
 
