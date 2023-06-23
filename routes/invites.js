@@ -7,42 +7,9 @@ const express = require("express");
 const { Logger } = require("winston");
 const router = express.Router();
 
-router.post("/", auth, async (req, res) => {
-  try {
-    const { eventId, recipientId, recipientEmail, message } = req.body;
-
-    const recipient = await User.findOne({ email: recipientEmail });
-    if (!recipient) {
-      return res.status(404).send("Recipient email not found");
-    }
-
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).send("Event not found");
-    }
-
-    const invite = new Invite({
-      eventId,
-      recipientId: recipient._id,
-      recipientEmail,
-      message,
-    });
-
-    await invite.save();
-
-    // Send notification to recipient's email
-    // Implement your logic for sending notifications here
-
-    res.send(invite);
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("An error occurred while sending the invite");
-  }
-});
-
 router.get("/incoming", auth, async (req, res) => {
   try {
-    const invites = await Invite.findOne({ recipientId: req.user._id });
+    const invites = await Invite.find({ recipientId: req.user._id });
     if (!invites) return res.status(404).send("You have no invites.");
 
     res.send(invites);
@@ -52,9 +19,9 @@ router.get("/incoming", auth, async (req, res) => {
   }
 });
 
-router.post("/accept", auth, async (req, res) => {
+router.post("/:inviteId/accept", auth, async (req, res) => {
   try {
-    const { inviteId } = req.body;
+    const inviteId = req.params.inviteId;
 
     const invite = await Invite.findById(inviteId);
     if (!invite) {
@@ -65,6 +32,9 @@ router.post("/accept", auth, async (req, res) => {
     await invite.save();
 
     const event = await Event.findById(invite.eventId);
+    if (!event) {
+      return res.status(404).send("Event not found");
+    }
 
     const recipientEvent = new Event({
       ...event.toObject(),
@@ -81,9 +51,9 @@ router.post("/accept", auth, async (req, res) => {
   }
 });
 
-router.post("/decline", auth, async (req, res) => {
+router.post("/:inviteId/decline", auth, async (req, res) => {
   try {
-    const { inviteId } = req.body;
+    const inviteId = req.params.inviteId;
 
     const invite = await Invite.findById(inviteId);
     if (!invite) {

@@ -1,6 +1,7 @@
 const { User } = require("../models.js/user");
 const { Calendar } = require("../models.js/calendar");
 const { Event } = require("../models.js/event");
+const { Invite } = require("../models.js/invite");
 const auth = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
@@ -42,6 +43,39 @@ router.put("/:eventId/alter", auth, async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send("An error occurred while modifying the event");
+  }
+});
+
+router.post("/:eventId/invite", auth, async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+    const { recipientEmail, message } = req.body;
+
+    const recipient = await User.findOne({ email: recipientEmail });
+    if (!recipient) {
+      return res.status(404).send("Recipient email not found");
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).send("Event not found");
+    }
+
+    const invite = new Invite({
+      recipientId: recipient._id,
+      recipientEmail,
+      message,
+    });
+
+    await invite.save();
+
+    // Send notification to recipient's email
+    // Implement your logic for sending notifications here
+
+    res.send(invite);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("An error occurred while sending the invite");
   }
 });
 

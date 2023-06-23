@@ -4,17 +4,26 @@ const events = require("./routes/events");
 const users = require("./routes/users");
 const auth = require("./routes/auth");
 const connection = require("./db");
+const session = require("express-session");
 const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
 connection();
+app.use(
+  session({
+    secret: "x-auth-token",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 app.use(express.json());
 app.use(
   cors({
-    exposedHeaders: "x-auth-token", // Allow the "x-auth-token" header to be exposed
+    origin: "http://localhost:3000", // Update this with your client's origin
+    exposedHeaders: "x-auth-token",
   })
 );
 

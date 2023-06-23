@@ -44,6 +44,27 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
+router.post("/logout", async (req, res) => {
+  try {
+    // Implement your logout logic here
+    // For example, you can clear the user's session and remove the token
+    req.session.destroy((err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Error logging out");
+      } else {
+        res.clearCookie("sessionID");
+        res.send("Logged out successfully");
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("An error occurred while logging out");
+  }
+});
+
+module.exports = router;
+
 router.get("/calendar", auth, async (req, res) => {
   try {
     const calendars = await Calendar.find({ userCalendar: req.user._id });
